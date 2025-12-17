@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Meta e Bônus de MRR - Setup Tecnologia</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9; color: #333; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+        .calculator-container { background-color: #ffffff; padding: 30px 40px; border-radius: 12px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); width: 100%; max-width: 650px; }
+        
+        /* --- NOVO: Estilo para o Logo --- */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        .logo-container img {
+            max-width: 180px; /* Ajuste o tamanho conforme necessário */
+            height: auto;
+        }
+        /* --- FIM DO NOVO ESTILO --- */
+
+        h1 { color: #1a253c; text-align: center; margin-bottom: 15px; font-size: 24px; margin-top: 0; }
+        p.subtitle { text-align: center; margin-top: 0; margin-bottom: 30px; color: #667; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #4a5568; }
+        input[type="number"], select { width: 100%; padding: 12px; border: 1px solid #cbd5e0; border-radius: 8px; box-sizing: border-box; font-size: 16px; transition: border-color 0.3s, box-shadow 0.3s; }
+        input[type="number"]:focus, select:focus { outline: none; border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2); }
+        #analystMrrLost { border-width: 2px; border-color: #4a5568; }
+        .results-container { margin-top: 30px; padding: 25px; background-color: #f7fafc; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .results-container h2 { margin-top: 0; margin-bottom: 20px; color: #1a253c; font-size: 20px; text-align: center; }
+        .result-item { font-size: 22px; font-weight: bold; color: #2c5282; margin-bottom: 20px; text-align: center; }
+        .result-item span { font-size: 16px; font-weight: normal; color: #667; display: block; }
+        #statusResult { font-size: 24px; font-weight: bold; padding: 15px; border-radius: 8px; transition: all 0.3s ease-in-out; text-align: center; }
+        .success { background-color: #c6f6d5; color: #2f855a; display: block; }
+        .failure { background-color: #fed7d7; color: #c53030; display: block; }
+        .hidden { display: none; }
+        hr { border: none; border-top: 1px solid #e2e8f0; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-container">
+        
+        <!-- --- NOVO: Container do Logo --- -->
+        <div class="logo-container">
+            <img src="https://setuptecnologia.com.br/wp-content/uploads/elementor/thumbs/logo_setup-qzezn9i5idblppgmhvno0kn9is05zyuu0k7oiqtb7k.png" alt="Logo Setup Tecnologia">
+        </div>
+        <!-- --- FIM DO CONTAINER DO LOGO --- -->
+
+        <h1>Calculadora de Meta e Bônus de MRR</h1>
+        <p class="subtitle">Insira os dados para calcular a meta e o bônus do analista.</p>
+
+        <!-- Campos de Entrada -->
+        <div class="form-group">
+            <label for="productSelect">Selecione o Produto e Time</label>
+            <select id="productSelect">
+                <option value="acessorias_onboarding">Acessorias - Onboarding</option>
+                <option value="acessorias_ongoing">Acessorias - Ongoing</option>
+                <option value="sittax_openix_onboarding">Sittax/Openix - Onboarding</option>
+                <option value="sittax_openix_ongoing">Sittax/Openix - Ongoing</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="analystMrrLost">MRR Perdido pelo Analista (R$ )</label>
+            <input type="number" id="analystMrrLost" placeholder="Insira o valor perdido">
+        </div>
+
+        <!-- Área de Resultados -->
+        <div class="results-container">
+            <h2>Resultado da Meta</h2>
+            <div id="individualGoalResult" class="result-item">
+                <span>A meta de perda para este analista é:</span>
+                R$ 0,00
+            </div>
+            <div id="statusResult" class="hidden"></div>
+        </div>
+        
+        <hr>
+
+        <div class="results-container">
+            <h2>Cálculo de Bônus (Base: R$ 250,00)</h2>
+            <div id="bonusDiscountResult" class="result-item">
+                <span>Desconto aplicado:</span>
+                R$ 0,00
+            </div>
+            <div id="finalBonusResult" class="result-item" style="color: #2f855a;">
+                <span>Bônus Final:</span>
+                R$ 250,00
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos do formulário
+        const productSelect = document.getElementById('productSelect');
+        const analystMrrLostInput = document.getElementById('analystMrrLost');
+
+        // Elementos de resultado
+        const individualGoalResultDiv = document.getElementById('individualGoalResult');
+        const statusResultDiv = document.getElementById('statusResult');
+        const bonusDiscountResultDiv = document.getElementById('bonusDiscountResult');
+        const finalBonusResultDiv = document.getElementById('finalBonusResult');
+
+        // Dados das metas individuais (calculados anteriormente)
+        const individualGoals = {
+            acessorias_onboarding: 884.13,
+            acessorias_ongoing: 4354.00,
+            sittax_openix_onboarding: 1060.21,
+            sittax_openix_ongoing: 2549.62
+        };
+
+        const baseBonus = 250;
+
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function calculate() {
+            const selectedTeam = productSelect.value;
+            const individualGoal = individualGoals[selectedTeam] || 0;
+            const analystMrrLost = parseFloat(analystMrrLostInput.value) || 0;
+
+            // 1. Exibe a meta individual
+            individualGoalResultDiv.innerHTML = `<span>A meta de perda para este analista é:</span> ${formatCurrency(individualGoal)}`;
+
+            if (analystMrrLostInput.value === '') {
+                statusResultDiv.classList.add('hidden');
+                bonusDiscountResultDiv.innerHTML = `<span>Desconto aplicado:</span> ${formatCurrency(0)}`;
+                finalBonusResultDiv.innerHTML = `<span>Bônus Final:</span> ${formatCurrency(baseBonus)}`;
+                return;
+            }
+
+            // 2. Status da Meta (Atingida / Não Atingida)
+            statusResultDiv.classList.remove('hidden');
+            if (analystMrrLost <= individualGoal) {
+                statusResultDiv.textContent = 'META ATINGIDA';
+                statusResultDiv.className = 'success';
+            } else {
+                statusResultDiv.textContent = 'META NÃO ATINGIDA';
+                statusResultDiv.className = 'failure';
+            }
+
+            // 3. Cálculo do Bônus Progressivo
+            let bonusDiscount = 0;
+            const percentageOfGoal = individualGoal > 0 ? (analystMrrLost / individualGoal) : 0;
+
+            if (percentageOfGoal > 0.5 && percentageOfGoal <= 1.0) {
+                // Zona de Atenção (51% a 100% da meta)
+                const progressInZone = (percentageOfGoal - 0.5) / 0.5;
+                bonusDiscount = progressInZone * (baseBonus * 0.5);
+            } else if (percentageOfGoal > 1.0) {
+                // Zona Crítica (acima de 100% da meta)
+                const penaltyBase = baseBonus * 0.5;
+                const progressInZone = (percentageOfGoal - 1.0) / 0.5; 
+                bonusDiscount = penaltyBase + (progressInZone * penaltyBase);
+            }
+            
+            bonusDiscount = Math.max(0, Math.min(baseBonus, bonusDiscount));
+            
+            const finalBonus = baseBonus - bonusDiscount;
+
+            // 4. Exibe os resultados do bônus
+            bonusDiscountResultDiv.innerHTML = `<span>Desconto aplicado:</span> ${formatCurrency(bonusDiscount)}`;
+            finalBonusResultDiv.innerHTML = `<span>Bônus Final:</span> ${formatCurrency(finalBonus)}`;
+        }
+
+        productSelect.addEventListener('change', calculate);
+        analystMrrLostInput.addEventListener('input', calculate);
+
+        document.addEventListener('DOMContentLoaded', calculate);
+    </script>
+
+</body>
+</html>
